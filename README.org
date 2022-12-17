@@ -68,6 +68,8 @@ Then make the expander:
       (proto-dot:make-dot-expander (cons 'left-or-right-pattern
                                          proto-dot:*default-dot-patterns*)))
 
+;; The same could also have been done using the macro DEFINE-DOT-EXPANDER.
+
 #+END_SRC
 
 And finally make a wrapper macro:
@@ -84,3 +86,6 @@ keywords in addition to the functionality provided by
 ~*default-dot-patterns*~. If you prefer not to use the default
 patterns, simply leave them out.
 
+~(tree-dot '(a . (b . c)) :right :right)~
+
+~=> C~
