@@ -27,6 +27,14 @@
 ;; 2. An object of class C for which a method with specializers (C T T)
 ;; on the generic function GENERIC-EXPAND-FORM exists.
 
+(defgeneric generic-expand-form (expander object form))
+
+(defun expand-form (expander object operation)
+  (typecase expander
+    ((or symbol function)
+     (funcall expander object operation))
+    (t (generic-expand-form expander object operation))))
+
 (defun make-dot-expander (patterns)
   (lambda (object operation)
     (loop :for pattern :in patterns
@@ -35,25 +43,16 @@
 (defmacro define-dot-expander (name patterns)
   `(setf (fdefinition ',name) (make-dot-expander ,patterns)))
 
+;;; Default expander
+
 (defparameter *default-dot-patterns* '(diamond-expression-pattern
                                        symbol-expression-pattern
                                        first-argument-expression-pattern
                                        error-pattern))
 
-;; Could also be made with:
-;; (define-dot-expander default-dot-expander *default-dot-patterns*)
+(define-dot-expander default-dot-expander *default-dot-patterns*)
 
-(defun default-dot-expander (object operation)
-  (loop :for pattern :in *default-dot-patterns*
-          :thereis (funcall pattern object operation)))
-
-(defgeneric generic-expand-form (expander object form))
-
-(defun expand-form (expander object operation)
-  (typecase expander
-    ((or symbol function)
-     (funcall expander object operation))
-    (t (generic-expand-form expander object operation))))
+;;; Proto dots
 
 (defmacro proto-dot (expander object &rest path)
   (if path
