@@ -1,2 +1,85 @@
 * Proto-dot
 
+This is a library that lets you easily build your own "dot" macro (or
+"arrow" macro), tailor-made for accessing objects in your code the way
+you prefer.
+
+A dot form looks like this:
+
+#+BEGIN_SRC lisp
+(dot "1" read-from-string 1+ float)
+#+END_SRC
+
+and is equivalent to the form:
+
+#+BEGIN_SRC lisp
+(float (1+ (read-from-string "1")))
+#+END_SRC
+
+The first argument is any object, and the rest a chain operations to
+be performed on the object (the "path"). The result of each operation
+is used as input to the next.
+
+** Usage
+
+In order to use this library, you should do three things:
+
+1. Define your own "patterns" that determine how the path argument
+   should be handled. For convenience, some general patterns are
+   provided by this library.
+
+2. Combine the patterns into an "expander".
+
+3. Make wrapper macros for the following macros, using your expander:
+
+- proto-dot
+- proto-dot?
+- proto-fdot
+- proto-fdot?
+
+** Example
+
+Suppose we want to make a dot macro for a binary tree built with
+conses. First we make a pattern:
+
+#+BEGIN_SRC lisp
+
+;; If we consider the form (DOT (CONS 'A 'B) :LEFT PRINT) then
+;; 
+;; - In the first step OBJECT is (A . B) and OPERATION is :LEFT
+;; - In the second step, OBJECT is (CAR (A . B)) and operation is PRINT
+
+(defun left-or-right-pattern (object operation)
+  (case operation
+    (:left `(car ,object))
+    (:right `(cdr ,object))
+    (t nil)))
+
+#+END_SRC
+
+Note that the pattern should return NIL if it doesn't match. This is
+to allow other patterns to match instead.
+
+Then make the expander:
+
+#+BEGIN_SRC lisp
+
+(setf (fdefinition 'binary-tree-expander)
+      (proto-dot:make-dot-expander (cons 'left-or-right-pattern
+                                         proto-dot:*default-dot-patterns*)))
+
+#+END_SRC
+
+And finally make a wrapper macro:
+
+#+BEGIN_SRC lisp
+
+(defmacro tree-dot (tree &rest path)
+  `(proto-dot::proto-dot binary-tree-expander ,tree ,@path))
+  
+#+END_SRC
+
+That's it! Now you can access binary trees using the :LEFT and :RIGHT
+keywords in addition to the functionality provided by
+*default-dot-patterns*.
+
