@@ -75,18 +75,6 @@
     `(block proto-dot?
        (proto-dot ,return-on-nil-expander ,object ,@path))))
 
-;; Alternative implementation of proto-dot?
-
-#+()
-(defmacro proto-dot? (expander object &rest path)
-  (let ((return-on-nil-expander (gensym "RETURN-ON-NIL")))
-    (setf (fdefinition return-on-nil-expander)
-          (lambda (object operation)
-            (let ((expansion (expand-form expander object operation)))
-              `(or ,expansion (return-from proto-dot?)))))
-    `(block proto-dot?
-       (proto-dot ,return-on-nil-expander ,object ,@path))))
-
 (defmacro proto-fdot? (expander &rest path)
   (alexandria:with-gensyms (object)
     `(lambda (,object)
