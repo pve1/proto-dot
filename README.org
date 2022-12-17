@@ -81,5 +81,6 @@ And finally make a wrapper macro:
 
 That's it! Now you can access binary trees using the :LEFT and :RIGHT
 keywords in addition to the functionality provided by
-~*default-dot-patterns*~.
+~*default-dot-patterns*~. If you prefer not to use the default
+patterns, simply leave them out.
 
