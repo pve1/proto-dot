@@ -37,8 +37,9 @@
 
 (defun make-dot-expander (patterns)
   (lambda (object operation)
-    (loop :for pattern :in patterns
-            :thereis (funcall pattern object operation))))
+    (or (loop :for pattern :in patterns
+            :thereis (funcall pattern object operation))
+        (error "No pattern matched ~S." operation))))
 
 (defmacro define-dot-expander (name patterns)
   `(setf (fdefinition ',name) (make-dot-expander ,patterns)))
