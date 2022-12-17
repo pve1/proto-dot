@@ -58,18 +58,21 @@ conses. First we make a pattern:
 #+END_SRC
 
 Note that the pattern should return NIL if it doesn't match. This is
-to allow other patterns to match instead.
+to allow other patterns to match instead. The patterns are tried in
+the order they are given to ~proto-dot:make-dot-expander~.
 
 Then make the expander:
 
 #+BEGIN_SRC lisp
+;; Either of the following expressions work:
 
 (setf (fdefinition 'binary-tree-expander)
       (proto-dot:make-dot-expander (cons 'left-or-right-pattern
                                          proto-dot:*default-dot-patterns*)))
 
-;; The same could also have been done using the macro DEFINE-DOT-EXPANDER.
-
+(proto-dot:define-dot-expander binary-tree-expander 
+    (cons 'left-or-right-pattern
+          proto-dot:*default-dot-patterns*))
 #+END_SRC
 
 And finally make a wrapper macro:
@@ -81,8 +84,8 @@ And finally make a wrapper macro:
   
 #+END_SRC
 
-That's it! Now you can access binary trees using the :LEFT and :RIGHT
-keywords in addition to the functionality provided by
+That's it! Now you can access your binary trees using the :LEFT
+and :RIGHT keywords in addition to the functionality provided by
 ~*default-dot-patterns*~. If you prefer not to use the default
 patterns, simply leave them out.
 
