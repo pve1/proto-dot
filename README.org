@@ -32,10 +32,10 @@ In order to use this library, you should do three things:
 
 3. Make wrapper macros for the following macros, using your expander:
 
-- proto-dot
-- proto-dot?
-- proto-fdot
-- proto-fdot?
+   - proto-dot
+   - proto-dot?
+   - proto-fdot
+   - proto-fdot?
 
 ** Example
 
