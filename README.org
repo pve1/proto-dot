@@ -110,59 +110,59 @@ macros should be "wrapped" by users of this library. The macros are:
 
 - ~proto-dot~
 
-The standard dot macro as described above.
-
-Example:
-
-#+BEGIN_SRC lisp
-(let ((plist (list :foo (list :bar 1))))
-  (proto-dot default-dot-expander plist (getf :foo) (getf :bar)))
-
-=> 1
-#+END_SRC
+  The standard dot macro as described above.
+  
+  Example:
+  
+  #+BEGIN_SRC lisp
+  (let ((plist (list :foo (list :bar 1))))
+    (proto-dot default-dot-expander plist (getf :foo) (getf :bar)))
+  
+  => 1
+  #+END_SRC
 
 - ~proto-dot?~
 
-A dot macro that returns ~nil~ if, at any point in the chain of
-operations, an operation returns ~nil~.
-
-Example:
-
-#+BEGIN_SRC lisp
-(proto-dot? default-dot-expander 1 evenp print)
-
-=> NIL
-#+END_SRC
-
+  A dot macro that returns ~nil~ if, at any point in the chain of
+  operations, an operation returns ~nil~.
+  
+  Example:
+  
+  #+BEGIN_SRC lisp
+  (proto-dot? default-dot-expander 1 evenp print)
+  
+  => NIL
+  #+END_SRC
+  
 - ~proto-fdot~
 
-A macro that returns a function of one argument that serves as the
-initial object in a dot expression.
-
-#+BEGIN_SRC lisp
-(mapcar (proto-fdot default-dot-expander (* _ 2)) '(1 2 3))
-
-=> (2 4 6)
-#+END_SRC
+  A macro that returns a function of one argument that serves as the
+  initial object in a dot expression.
+  
+  #+BEGIN_SRC lisp
+  (mapcar (proto-fdot default-dot-expander (* _ 2)) '(1 2 3))
+  
+  => (2 4 6)
+  #+END_SRC
 
 - ~proto-fdot?~
 
-A macro that returns a function of one argument as above, except that the
-function immediately returns ~nil~ if any operation in the dot path
-returns ~nil~.
-
-#+BEGIN_SRC lisp
-(flet ((odd-filter (x)
-         (if (oddp x)
-             nil
-             x)))
-  (mapcar (proto-fdot? default-dot-expander 
-                       odd-filter
-                       (* _ 2))
-          '(1 2 3)))
-
-=> (NIL 4 NIL)
-#+END_SRC
+  A macro that returns a function of one argument as above, except that the
+  function immediately returns ~nil~ if any operation in the dot path
+  returns ~nil~.
+  
+  #+BEGIN_SRC lisp
+  (flet ((odd-filter (x)
+           (if (oddp x)
+               nil
+               x)))
+    (mapcar (proto-fdot? default-dot-expander 
+                         odd-filter
+                         (* _ 2))
+            '(1 2 3)))
+  
+  => (NIL 4 NIL)
+  #+END_SRC
 
 ** Building a dot macro
 
