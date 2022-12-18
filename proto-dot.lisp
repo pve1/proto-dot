@@ -46,9 +46,9 @@
 
 ;;; Default expander
 
-(defparameter *default-dot-patterns* '(underscore-expression-pattern
-                                       symbol-expression-pattern
-                                       first-argument-expression-pattern
+(defparameter *default-dot-patterns* '(underscore-pattern
+                                       symbol-pattern
+                                       first-argument-pattern
                                        error-pattern))
 
 (define-dot-expander default-dot-expander *default-dot-patterns*)
