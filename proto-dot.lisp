@@ -68,11 +68,12 @@
        (proto-dot ,expander ,object ,@path))))
 
 (defmacro proto-dot? (expander object &rest path)
-  (let ((return-on-nil-expander
+  (let* ((block-name (gensym "PROTO-DOT?"))
+         (return-on-nil-expander
           (lambda (object operation)
             (let ((expansion (expand-form expander object operation)))
-              `(or ,expansion (return-from proto-dot?))))))
-    `(block proto-dot?
+              `(or ,expansion (return-from ,block-name))))))
+    `(block ,block-name
        (proto-dot ,return-on-nil-expander ,object ,@path))))
 
 (defmacro proto-fdot? (expander &rest path)
