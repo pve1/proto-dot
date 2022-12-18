@@ -54,13 +54,21 @@ conses. First we make a pattern:
     (:left `(car ,object))
     (:right `(cdr ,object))
     (t nil)))
+#+END_SRC
+
+Then we define a list of patterns:
+
+#+BEGIN_SRC lisp
+
+(defparameter *binary-tree-patterns* 
+  (cons 'left-or-right-pattern
+        proto-dot:*default-dot-patterns*))
 
 #+END_SRC
 
 Note that the pattern should return NIL if it doesn't match. This is
 to allow other patterns to match instead. The patterns are tried in
-the order specified by the list given to the function
-~proto-dot:make-dot-expander~.
+the order specified by the ~*binary-tree-patterns*~ list.
 
 Then make the expander:
 
@@ -68,12 +76,9 @@ Then make the expander:
 ;; Either of the following expressions work:
 
 (setf (fdefinition 'binary-tree-expander)
-      (proto-dot:make-dot-expander (cons 'left-or-right-pattern
-                                         proto-dot:*default-dot-patterns*)))
+      (proto-dot:make-dot-expander *binary-tree-patterns*))
 
-(proto-dot:define-dot-expander binary-tree-expander 
-    (cons 'left-or-right-pattern
-          proto-dot:*default-dot-patterns*))
+(proto-dot:define-dot-expander binary-tree-expander *binary-tree-patterns*)
 #+END_SRC
 
 And finally make a wrapper macro:
@@ -90,6 +95,8 @@ and :RIGHT keywords in addition to the functionality provided by
 ~*default-dot-patterns*~. If you prefer not to use the default
 patterns, simply leave them out.
 
-~(tree-dot '(a . (b . c)) :right :right)~
+#+BEGIN_SRC lisp
+(tree-dot '(a . (b . c)) :right :right symbol-name)
 
-~=> C~
+=> "C"
+#+END_SRC
