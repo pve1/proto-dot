@@ -1,8 +1,16 @@
+* Outline
+
 * Proto-dot
 
-This is a library that lets you easily build your own "dot" macro (or
-"arrow" macro), tailor-made for accessing objects in your code the way
-you prefer.
+** Introduction
+
+This is a library that lets you easily build your own "dot" macro for
+accessing object properties with a convenient syntax. It's quite easy
+to define a dot macro from scratch, but it can get tedious over time,
+which is why this library exists. It does not offer a single dot macro
+that is intended to work for all use cases. Instead, it offers
+building blocks with which custom dot macros can be assembled with
+relatively little effort.
 
 A dot form looks like this:
 
@@ -10,93 +18,246 @@ A dot form looks like this:
 (dot "1" read-from-string 1+ float)
 #+END_SRC
 
-and is equivalent to the form:
+It is equivalent to the form:
 
 #+BEGIN_SRC lisp
 (float (1+ (read-from-string "1")))
 #+END_SRC
 
-The first argument is any object, and the rest a chain operations to
-be performed on the object (the "path"). The result of each operation
-is used as input to the next.
-
-** Usage
-
-In order to use this library, you should do three things:
-
-1. Define your own "patterns" that determine how the path argument
-   should be handled. For convenience, some general patterns are
-   provided by this library.
-
-2. Combine the patterns into an "expander".
-
-3. Make wrapper macros for the following macros, using your expander:
-
-   - ~proto-dot~
-   - ~proto-dot?~
-   - ~proto-fdot~
-   - ~proto-fdot?~
-
-** Example
-
-Suppose we want to make a dot macro for a binary tree built with
-conses. First we make a pattern:
+or
 
 #+BEGIN_SRC lisp
-
-;; If we consider the form (DOT (CONS 'A 'B) :LEFT PRINT) then
-;; 
-;; - In the first step OBJECT is (A . B) and OPERATION is :LEFT
-;; - In the second step, OBJECT is (CAR (A . B)) and operation is PRINT
-
-(defun left-or-right-pattern (object operation)
-  (case operation
-    (:left `(car ,object))
-    (:right `(cdr ,object))
-    (t nil)))
+(funcall (alexandria:compose #'float #'1+ #'read-from-string) "1")
 #+END_SRC
 
-Then we define a list of patterns:
+The first argument is any object, and the rest a chain of operations
+to be performed on the object (the "path"). The result of each
+operation is used as input to the next.
+ 
+** Patterns
+
+In order to build a dot macro we need to decide which "patterns" it
+should recognize. A pattern can be a function that matches certain
+forms and generates a suitable expansion. For instance, the pattern
+~(+ 1 _)~ could mean that ~_~ is a placeholder for the value returned
+by the previous operation in the path, or the initial object
+itself. Therefore the expression
 
 #+BEGIN_SRC lisp
+(dot 1 (+ 1 _))
+#+END_SRC
 
-(defparameter *binary-tree-patterns* 
-  (cons 'left-or-right-pattern
-        proto-dot:*default-dot-patterns*))
+would expand to ~(+ 1 1)~.
 
+For convenience, this library provides a few general patterns that
+should fit many use cases (in the ~proto-dot.tools~ package). They are:
+
+- ~symbol-expression-pattern~
+
+  ~(dot a foo) -> (foo a)~
+
+- ~first-argument-expression-pattern~
+
+  ~(dot a (foo b)) -> (foo a b)~
+
+- ~underscore-expression-pattern~
+
+  ~(dot a (foo b _)) -> (foo b a)~
+
+- ~diamond-expression-pattern~
+
+  ~(dot a (foo b <>)) -> (foo b a)~
+
+- ~error-pattern~
+
+  Signals an error. Intended to be used when no other pattern matches.
+
+A default list of patterns is defined as follows:
+
+#+BEGIN_SRC lisp
+(defparameter *default-dot-patterns* '(underscore-expression-pattern
+                                       symbol-expression-pattern
+                                       first-argument-expression-pattern
+                                       error-pattern))
+#+END_SRC
+
+** Expanders
+
+An expander is a function of two arguments, or anything for which a
+suitable method on the generic function ~generic-expand-form~ has been
+defined. It will (usually) combine some patterns to achieve the
+desired behaviour of the dot macro being built.
+
+The simplest expander takes a list of patterns and tries each one
+until a match is found. Like this, for instance:
+
+#+BEGIN_SRC lisp
+(defun my-expander (patterns)
+  (loop :for pattern :in patterns
+          :thereis (funcall pattern object operation)))
+#+END_SRC
+
+A default expander, ~default-dot-expander~, is provided that does
+exactly that, for the list ~*default-dot-patterns*~.
+
+If fancier behaviour is required, one should specialize
+~generic-expand-form~. Instances of classes can function as expanders.
+
+** Proto dot macros
+
+The library defines four "proto macros" that are like regular dot
+macros, except that they take an additional "expander" argument that
+tells the macro which patterns to recognize. One or more of these
+macros should be "wrapped" by users of this library. The macros are:
+
+- ~proto-dot~
+
+The standard dot macro as described above.
+
+Example:
+
+#+BEGIN_SRC lisp
+(let ((plist (list :foo (list :bar 1))))
+  (proto-dot default-dot-expander plist (getf :foo) (getf :bar)))
+
+=> 1
+#+END_SRC
+
+- ~proto-dot?~
+
+A dot macro that returns ~nil~ if, at any point in the chain of
+operations, an operation returns ~nil~.
+
+Example:
+
+#+BEGIN_SRC lisp
+(proto-dot? default-dot-expander 1 evenp print)
+
+=> NIL
+#+END_SRC
+
+- ~proto-fdot~
+
+A macro that returns a function of one argument that serves as the
+initial object in a dot expression.
+
+#+BEGIN_SRC lisp
+(mapcar (proto-fdot default-dot-expander (* _ 2)) '(1 2 3))
+
+=> (2 4 6)
+#+END_SRC
+
+- ~proto-fdot?~
+
+A macro that returns a function of one argument as above, except that the
+function immediately returns ~nil~ if any operation in the dot path
+returns ~nil~.
+
+#+BEGIN_SRC lisp
+(flet ((odd-filter (x)
+         (if (oddp x)
+             nil
+             x)))
+  (mapcar (proto-fdot? default-dot-expander 
+                       odd-filter
+                       (* _ 2))
+          '(1 2 3)))
+
+=> (NIL 4 NIL)
+#+END_SRC
+
+** Building a dot macro
+
+Suppose we want to make a dot macro for accessing nested plists. We
+will assume the keys are always keywords. First we need to define a
+pattern:
+
+#+BEGIN_SRC lisp
+(defun plist-pattern (object operation)
+  (when (keywordp operation)
+    `(getf ,object ,operation)))
+#+END_SRC
+
+Then we need a list of patterns:
+
+#+BEGIN_SRC lisp
+(defparameter *plist-dot-patterns* 
+  (cons 'plist-pattern proto-dot:*default-dot-patterns*))
 #+END_SRC
 
 Note that the pattern should return NIL if it doesn't match. This is
 to allow other patterns to match instead. The patterns are tried in
-the order specified by the ~*binary-tree-patterns*~ list.
+the order specified by the ~*plist-dot-patterns*~ list.
 
-Then make the expander:
+Then we make the expander using either of the following expressions:
 
 #+BEGIN_SRC lisp
 ;; Either of the following expressions work:
 
-(setf (fdefinition 'binary-tree-expander)
-      (proto-dot:make-dot-expander *binary-tree-patterns*))
+(setf (fdefinition 'plist-dot-expander)
+      (proto-dot:make-dot-expander *plist-dot-patterns*))
 
-(proto-dot:define-dot-expander binary-tree-expander *binary-tree-patterns*)
+;; or
+
+(proto-dot:define-dot-expander plist-dot-expander *plist-dot-patterns*)
 #+END_SRC
 
-And finally make a wrapper macro:
+Once we have the expander, we can test it out:
 
 #+BEGIN_SRC lisp
+(proto-dot:proto-dot plist-dot-expander '(:foo (:bar 1)) :foo :bar)
 
-(defmacro tree-dot (tree &rest path)
-  `(proto-dot::proto-dot binary-tree-expander ,tree ,@path))
-  
+=> 1
+
+(proto-dot:proto-dot plist-dot-expander '(:foo (:bar 1)) :foo :bar 1+)
+
+=> 2
+
+(let ((plist '()))
+  (setf (proto-dot:proto-dot plist-dot-expander plist :foo :bar) 1)
+  plist)
+
+=> (:FOO (:BAR 1))
 #+END_SRC
 
-That's it! Now you can access your binary trees using the :LEFT
-and :RIGHT keywords in addition to the functionality provided by
-~*default-dot-patterns*~. If you prefer not to use the default
-patterns, simply leave them out.
+Finally we are ready to make some wrapper macros:
+#+BEGIN_SRC lisp
+(defmacro dot (object &rest path)
+  `(proto-dot:proto-dot plist-dot-expander ,object ,@path))
+
+(defmacro dot? (object &rest path)
+  `(proto-dot:proto-dot? plist-dot-expander ,object ,@path))
+
+(defmacro fdot (object &rest path)
+  `(proto-dot:proto-fdot plist-dot-expander ,object ,@path))
+
+(defmacro fdot? (object &rest path)
+  `(proto-dot:proto-fdot? plist-dot-expander ,object ,@path))
+#+END_SRC
+
+That's it! Now we can access plists using a convenient keyword path in
+addition to being able to enjoy the default functionality contained in
+~*default-dot-patterns*~.
+
+If we would have preferred not to include the default patterns, we
+could simply have left them out.
 
 #+BEGIN_SRC lisp
-(tree-dot '(a . (b . c)) :right :right symbol-name)
+(defparameter *person* '())
 
-=> "C"
+(setf (dot *person* :name :first) "Bilbo"
+      (dot *person* :name :last) "Baggins"
+      (dot *person* :age) 111)
+
+,*person*
+=> (:AGE 111 :NAME (:LAST "Baggins" :FIRST "Bilbo"))
+
+(defun person-name (person)
+  (concatenate 'string 
+               (dot person :name :first)
+               " "
+               (dot person :name :last)))
+
+(person-name *person*)
+=> "Bilbo Baggins"
 #+END_SRC
