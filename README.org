@@ -59,7 +59,8 @@ conses. First we make a pattern:
 
 Note that the pattern should return NIL if it doesn't match. This is
 to allow other patterns to match instead. The patterns are tried in
-the order they are given to ~proto-dot:make-dot-expander~.
+the order specified by the list given to the function
+~proto-dot:make-dot-expander~.
 
 Then make the expander:
 
