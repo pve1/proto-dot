@@ -55,12 +55,15 @@
 
 ;;; Proto dots
 
-(defmacro proto-dot (expander object &rest path)
+(defun generate-proto-dot-form (expander object path)
   (if path
       (destructuring-bind (first &rest rest) path
         (let ((op (expand-form expander object first)))
-          `(proto-dot ,expander ,op ,@rest)))
+          (generate-proto-dot-form expander op rest)))
       object))
+
+(defmacro proto-dot (expander object &rest path)
+  (generate-proto-dot-form expander object path))
 
 (defmacro proto-fdot (expander &rest path)
   (alexandria:with-gensyms (object)
@@ -74,7 +77,7 @@
             (let ((expansion (expand-form expander object operation)))
               `(or ,expansion (return-from ,block-name))))))
     `(block ,block-name
-       (proto-dot ,return-on-nil-expander ,object ,@path))))
+       ,(generate-proto-dot-form return-on-nil-expander object path))))
 
 (defmacro proto-fdot? (expander &rest path)
   (alexandria:with-gensyms (object)
