@@ -3,10 +3,10 @@
 
 (defpackage :proto-dot.tools
   (:use :cl)
-  (:export #:symbol-expression-pattern
-           #:first-argument-expression-pattern
-           #:underscore-expression-pattern
-           #:diamond-expression-pattern
+  (:export #:symbol-pattern
+           #:first-argument-pattern
+           #:underscore-pattern
+           #:diamond-pattern
            #:error-pattern
 
            #:walk-tree-elements
@@ -72,19 +72,19 @@
 ;; expansion, otherwise NIL.
 
 ;; (dot a foo) -> (foo a)
-(defun symbol-expression-pattern (object expression)
+(defun symbol-pattern (object expression)
   (when (symbolp expression)
     (list expression object)))
 
 ;; (dot a (foo b)) -> (foo a b)
-(defun first-argument-expression-pattern (object expression)
+(defun first-argument-pattern (object expression)
   (when (and (listp expression)
              (not (eq 'quote (first expression))))
     (list* (first expression)
            object
            (rest expression))))
 
-(defun make-placeholder-expression-pattern (placeholder)
+(defun make-placeholder-pattern (placeholder)
   (lambda (object expression)
     (let (actual-symbol)
       (when (and (listp expression)
@@ -101,12 +101,12 @@
            ,expression)))))
 
 ;; (dot a (foo b _)) -> (foo b a)
-(setf (fdefinition 'underscore-expression-pattern)
-      (make-placeholder-expression-pattern "_"))
+(setf (fdefinition 'underscore-pattern)
+      (make-placeholder-pattern "_"))
 
 ;; (dot a (foo b <>)) -> (foo b a)
-(setf (fdefinition 'diamond-expression-pattern)
-      (make-placeholder-expression-pattern "<>"))
+(setf (fdefinition 'diamond-pattern)
+      (make-placeholder-pattern "<>"))
 
 (defun error-pattern (thing op)
   (declare (ignore thing))

@@ -50,19 +50,19 @@ would expand to ~(+ 1 1)~.
 For convenience, this library provides a few general patterns that
 should fit many use cases (in the ~proto-dot.tools~ package). They are:
 
-- ~symbol-expression-pattern~
+- ~symbol-pattern~
 
   ~(dot a foo) -> (foo a)~
 
-- ~first-argument-expression-pattern~
+- ~first-argument-pattern~
 
   ~(dot a (foo b)) -> (foo a b)~
 
-- ~underscore-expression-pattern~
+- ~underscore-pattern~
 
   ~(dot a (foo b _)) -> (foo b a)~
 
-- ~diamond-expression-pattern~
+- ~diamond-pattern~
 
   ~(dot a (foo b <>)) -> (foo b a)~
 
@@ -73,9 +73,9 @@ should fit many use cases (in the ~proto-dot.tools~ package). They are:
 A default list of patterns is defined as follows:
 
 #+BEGIN_SRC lisp
-(defparameter *default-dot-patterns* '(underscore-expression-pattern
-                                       symbol-expression-pattern
-                                       first-argument-expression-pattern
+(defparameter *default-dot-patterns* '(underscore-pattern
+                                       symbol-pattern
+                                       first-argument-pattern
                                        error-pattern))
 #+END_SRC
 
