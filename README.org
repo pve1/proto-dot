@@ -234,7 +234,7 @@ Finally we are ready to make some wrapper macros:
 #+END_SRC
 
 That's it! Now we can access plists using a convenient keyword path in
-addition to being able to enjoy the default functionality contained in
+addition to being able to enjoy the default functionality provided by
 ~*default-dot-patterns*~.
 
 If we would have preferred not to include the default patterns, we
