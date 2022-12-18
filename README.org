@@ -247,7 +247,7 @@ could simply have left them out.
       (dot *person* :name :last) "Baggins"
       (dot *person* :age) 111)
 
-,*person*
+*person*
 => (:AGE 111 :NAME (:LAST "Baggins" :FIRST "Bilbo"))
 
 (defun person-name (person)
