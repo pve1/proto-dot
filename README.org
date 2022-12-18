@@ -1,5 +1,3 @@
-* Outline
-
 * Proto-dot
 
 ** Introduction
