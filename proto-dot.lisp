@@ -46,7 +46,7 @@
 
 ;;; Default expander
 
-(defparameter *default-dot-patterns* '(diamond-expression-pattern
+(defparameter *default-dot-patterns* '(underscore-expression-pattern
                                        symbol-expression-pattern
                                        first-argument-expression-pattern
                                        error-pattern))
