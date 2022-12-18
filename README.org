@@ -101,7 +101,7 @@ exactly that, for the list ~*default-dot-patterns*~.
 If fancier behaviour is required, one should specialize
 ~generic-expand-form~. Instances of classes can function as expanders.
 
-** Proto dot macros
+** Proto-dot macros
 
 The library defines four "proto macros" that are like regular dot
 macros, except that they take an additional "expander" argument that
