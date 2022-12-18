@@ -86,12 +86,12 @@ suitable method on the generic function ~generic-expand-form~ has been
 defined. It will (usually) combine some patterns to achieve the
 desired behaviour of the dot macro being built.
 
-The simplest expander takes a list of patterns and tries each one
-until a match is found. Like this, for instance:
+A simple way to implement an expander is to have a list of patterns
+and try each one until a match is found. Like this, for instance:
 
 #+BEGIN_SRC lisp
-(defun my-expander (patterns)
-  (loop :for pattern :in patterns
+(defun my-expander (object operation)
+  (loop :for pattern :in '(pattern-1 pattern-2 pattern-3)
           :thereis (funcall pattern object operation)))
 #+END_SRC
 
