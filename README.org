@@ -183,7 +183,7 @@ Then we need a list of patterns:
   (cons 'plist-pattern proto-dot:*default-dot-patterns*))
 #+END_SRC
 
-Note that the pattern should return NIL if it doesn't match. This is
+Note that the pattern should return ~nil~ if it doesn't match. This is
 to allow other patterns to match instead. The patterns are tried in
 the order specified by the ~*plist-dot-patterns*~ list.
 
