@@ -74,7 +74,9 @@
             (let ((expansion (expand-form expander object operation)))
               `(or ,expansion (return-from ,block-name))))))
     `(block ,block-name
-       (proto-dot ,return-on-nil-expander ,object ,@path))))
+       (proto-dot ,return-on-nil-expander
+                  (or ,object (return-from ,block-name))
+                  ,@path))))
 
 (defmacro proto-fdot? (expander &rest path)
   (alexandria:with-gensyms (object)
